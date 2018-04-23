@@ -149,7 +149,7 @@ if($file_dir =~ m/-help/){
 
 print "Using directory: $file_dir\n";
 
-chdir($file_dir) # change to the user-specified directory
+chdir($file_dir); # change to the user-specified directory
 open(aggregateoutput, ">ftir_aggregate.txt"); # output file 
 opendir(DIR, $file_dir) or die "cannot open dir $file_dir: $!";
 while (my $filename = readdir(DIR)) { 
