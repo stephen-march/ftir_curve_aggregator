@@ -114,8 +114,6 @@ sub printHelp{
 ####################################################################################################################
 #                                       === Main Body === 	                                                   	   #
 ####################################################################################################################
-
-open(aggregateoutput, ">ftir_aggregate.txt"); # output file 
 system("cls"); # clears command line screen
 
 my $re_extension = '.*\.dpt';
@@ -151,7 +149,8 @@ if($file_dir =~ m/-help/){
 
 print "Using directory: $file_dir\n";
 
-#chdir($file_dir)
+chdir($file_dir) # change to the user-specified directory
+open(aggregateoutput, ">ftir_aggregate.txt"); # output file 
 opendir(DIR, $file_dir) or die "cannot open dir $file_dir: $!";
 while (my $filename = readdir(DIR)) { 
   
