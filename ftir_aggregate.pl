@@ -11,17 +11,17 @@ use Cwd;
 ####################################################################################################################
 # ftir_aggregator.pl
 #
-# Parses through ftir .dpt files
+# Parses through ftir .dpt files with a user specified regex delimiter (default delimiter is csv)
 # Merges all files from a specified directory into a single csv file
 # Output file is saved as ftir_aggregate.txt
 #
 # How to use:
-# 	perl ftir_aggregate some_directory_path
+# 	perl ftir_aggregate.pl your_regex_delimiter some_directory_path
 # Examples of use:
-#	1. Within the current directory (pwd)
-#		perl ftir_aggregate.pl 
-#	1. Within some other directory
-#		perl ftir_aggregate.pl "C:\Users\some directory\some other directory\hey another directory"
+#	1. Within the current directory (pwd) for a comma separated value file (csv)
+#		perl ftir_aggregate.pl \,
+#	1. Within some other directory but this time for a space or tab separated value file
+#		perl ftir_aggregate.pl \s+ "C:\Users\some directory\some other directory\hey another directory"
 
 
 ####################################################################################################################
@@ -103,9 +103,12 @@ sub printHelp{
 	print "Output file is saved as ftir_aggregate.txt\n";
 	print "\n";
 	print "How to use:\n";
-	print "\tperl ftir_aggregate some_directory_path\n";
-	print "Example of use:\n";
-	print "\tperl ftir_aggregate.pl \"C:\\Users\\some directory\\some other directory\\hey another directory\\\"\n";
+	print "\tperl ftir_aggregate some_directory_path your_delimiter\n";
+	print "Example of use for input files that are comma delimited:\n";
+	print "\tperl ftir_aggregate.pl \\, \"C:\\Users\\some directory\\some other directory\\hey another directory\\\"  \n";
+	print "\n";
+	print "Example of use for input files that are space or tab delimited:\n";
+	print "\tperl ftir_aggregate.pl \\s+ \"C:\\Users\\some directory\\some other directory\\hey another directory\\\"  \n";
 	print "\n";
 	print "\n";
 	exit;
@@ -116,8 +119,33 @@ sub printHelp{
 ####################################################################################################################
 system("cls"); # clears command line screen
 
+# Get the directory where the files are located that you want to scan
+my $re_delimiter = $ARGV[0]; # how is the file delimited, e.g. if it's a csv, use '\,' but if it's space or tab delimited, use '\s+'
+my $file_dir = $ARGV[1]; # reads in first argument from the commandline
+# if no directory is defined as an input variable, use the current working directory
+if(not defined $file_dir or not defined $re_delimiter){
+	
+	warn "***********************************************\n";
+	if(not defined $file_dir){
+		$file_dir = cwd();
+		warn "AN INPUT DIRECTORY WAS NOT PROVIDED!\n";
+		warn "Using the current working directory instead...\n";
+		warn "\n";
+	}
+	if(not defined $re_delimiter){
+		$re_delimiter = '\,'; # default delimiter is a comma
+		warn "NO FILE DELIMTER PROVIDED!\n";
+		warn "Using a comma to separate input data for your file...\n";
+		warn "\n";
+	}
+	warn "For an example of how to use this script, try:\n";
+	warn "\t perl ftir_aggregate.pl  -help\n";
+	warn "***********************************************\n";
+}
+
 my $re_extension = '.*\.dpt';
-my $re_line = '(\d+\.\d+),(\d+\.\d+|\-\d+\.\d+)'; # Example: "7997.02602,0.318843" and account for negative sign
+my $re_line = '(\d+\.\d+)'.$re_delimiter.'(\d+\.\d+|\-\d+\.\d+)'; # Example: "7997.02602,0.318843" and account for negative sign
+#my $re_line = '(\d+\.\d+)\s+(\d+\.\d+|\-\d+\.\d+)'; # Example: "7997.02602,0.318843" and account for negative sign
 my @file_names = ('wavevector (cm^-1)'); # Assumes the x-axis is in wavevectors
 my @aggregate_matrix;
 my $file_count = 0;
@@ -129,19 +157,6 @@ my $cur_min = 0;
 my $cur_max = 0;
 
 
-# Get the directory where the files are located that you want to scan
-my $file_dir = $ARGV[0]; # reads in first argument from the commandline
-# if no directory is defined as an input variable, use the current working directory
-if(not defined $file_dir){
-	$file_dir = cwd();
-	warn "***********************************************\n";
-	warn "AN INPUT DIRECTORY WAS NOT PROVIDED!\n";
-	warn "Using the current working directory instead...\n";
-	warn "\n";
-	warn "For an example of how to use this script, try:\n";
-	warn "\t perl ftir_aggregate.pl  -help\n";
-	warn "***********************************************\n";
-}
 
 if($file_dir =~ m/-help/){
 	printHelp();
@@ -175,6 +190,9 @@ while (my $filename = readdir(DIR)) {
 				#print "DEBUG: $1,$2\n";
 				push(@cur_x,$1);
 				push(@cur_y,$2);
+			}
+			else {
+				print "DEBUG: the line $line does not match line regex: $re_line\n";
 			}
 		}
 		
